@@ -86,6 +86,223 @@ This is an **AI-powered Energy Management System** designed to optimize power di
 
 ---
 
+## ⚡ Electrical Engineering Design
+
+### System Parameters & Specifications
+
+The microgrid operates at standard electrical specifications designed for practical deployment:
+
+**Grid Interface:**
+- **Grid Voltage**: 230V AC (single-phase)
+- **Frequency**: 50 Hz (standard in many countries)
+- **Maximum Power Rating**: 5000W+ (soft limit, expandable)
+
+**Battery Storage System:**
+- **Chemistry**: 48V DC nominal
+- **Capacities (Configurable)**:
+  - Small scenario: 150 Wh
+  - Standard scenario: 300 Wh
+  - Large scenario: 800 Wh
+- **Maximum Discharge Power**: 1500W
+- **Maximum Charge Power**: 1500W
+- **Round-trip Efficiency**: 90%
+- **SOC Operating Range**: 20% - 90% (protected window)
+
+**Solar PV Array:**
+- **Peak Capacity**: 2000W (nominal, scalable)
+- **Voltage Output**: Suitable for DC-DC conversion to 48V battery bus
+- **Generation Profile**: Dynamic based on time-of-day and weather scenarios
+  - Low-irradiance scenario: 0.5× nominal
+  - High-irradiance scenario: 1.5× nominal
+
+**Loads (Demand Profiles):**
+- **Residential Clusters**:
+  - Load 1: 1500W peak (distributed heating, cooling)
+  - Load 2: 1200W peak (appliances, lighting)
+  - Total: ~2700W peak residential demand
+- **Industrial Clusters**:
+  - Load 1: 3000W peak (industrial equipment)
+  - Load 2: 2500W peak (machinery, motors)
+  - Total: ~5500W peak industrial demand
+
+### Power Flow Architecture
+
+```
+                    ┌─────────────────────────────┐
+                    │   MICROGRID POWER BUS       │
+                    │      (DC 48V primary)       │
+                    └─────────────┬───────────────┘
+                                  │
+                    ┌─────────────┼─────────────┐
+                    │             │             │
+                    ▼             ▼             ▼
+            ┌───────────────┐ ┌─────────┐ ┌──────────────┐
+            │  PV Array     │ │ Battery │ │   Grid Tie   │
+            │   (2000W)     │ │ (48V)   │ │  Inverter    │
+            │   ~250V DC    │ │ Bidirectional
+            │     or        │ │   DC-DC │ │  (AC 230V)   │
+            │   10 Panels   │ │ Converter│ │              │
+            └───────────────┘ └─────────┘ └──────────────┘
+                    │             │             │
+                    └─────────────┼─────────────┘
+                                  │
+                    ┌─────────────┴─────────────┐
+                    │   EMS Control Signals    │
+                    │  (via microcontroller or │
+                    │   Power Electronics)     │
+                    └─────────────╤─────────────┘
+                                  │
+                    ┌─────────────┴─────────────┐
+                    │  DISTRIBUTION SYSTEM     │
+                    │  (AC 230V to Loads)      │
+                    └─────────────┬─────────────┘
+                                  │
+                    ┌─────────────┼─────────────┐
+                    │             │             │
+                    ▼             ▼             ▼
+            ┌───────────────┐ ┌─────────┐ ┌──────────────┐
+            │   Residential │ │Industrial│ │  Critical    │
+            │    Loads      │ │  Loads  │ │    Loads     │
+            │  (1.5-1.2kW)  │ │(3-2.5kW)│ │   (Priority) │
+            └───────────────┘ └─────────┘ └──────────────┘
+```
+
+### Electrical Operating Scenarios
+
+**Scenario 1: Residential Microgrid (Low-Demand)**
+- Peak load demand: ~2700W
+- Solar generation (optimal): 2000W
+- Battery capacity: 300Wh
+- Grid role: Peak shaving & emergency backup
+- Typical cost savings: 35-45%
+
+**Scenario 2: Industrial Microgrid (High-Demand)**
+- Peak load demand: ~5500W
+- Solar generation: 2000W (insufficient)
+- Battery capacity: 300Wh (standard)
+- Grid role: Primary power source with demand management
+- Typical cost savings: 20-30%
+
+**Scenario 3: High Solar Availability**
+- Solar multiplier: 1.5× (3000W peak)
+- Increased battery charging opportunity
+- Potential grid injection (export earnings)
+- Cost reductions: 45-55%
+
+**Scenario 4: Low Solar Availability**
+- Solar multiplier: 0.5× (1000W peak)
+- Heavy grid dependency
+- Battery as emergency buffer
+- Cost impacts: Minimal savings (10-15%)
+
+### Battery State Management
+
+The system implements intelligent battery SOC (State-of-Charge) protection:
+
+```
+100% ┌──────────────────────────────┐
+     │      ⚠️ Over-charge Zone    │
+     │   (>90% - charging inhibited)│
+ 90% ├──────────────────────────────┤
+     │                              │
+     │    ✅ SAFE OPERATING WINDOW   │
+     │    (20% - 90% optimized)     │
+     │                              │
+ 20% ├──────────────────────────────┤
+     │    ⚠️  Deep-discharge Zone    │
+     │   (<20% - discharging blocked)│
+  0% └──────────────────────────────┘
+```
+
+**Protection Logic:**
+- When SOC ≥ 90%: Battery charging stops (protects longevity)
+- When SOC ≤ 20%: Battery discharging stops (prevents deep discharge damage)
+- Efficiency factor: 0.9 accounts for charge/discharge conversion losses
+
+### Power Calculations
+
+**Battery Power Requirement (Per EMS Decision):**
+```
+P_required = 0.6 × (Load_Demand - Solar_Generation)
+```
+- 60% of power deficit sourced from battery
+- Remaining 40% from grid (cost optimization)
+- Efficiency applied: P_adj = P_req / η (discharge) or P_req × η (charge)
+
+**Grid Power Flow:**
+```
+P_grid = Load_Total - (P_solar + P_battery)
+```
+- Positive P_grid: Power imported from grid (cost incurred)
+- Negative P_grid: Power exported to grid (potential revenue)
+
+### Time-Based Tariff Integration
+
+The system operates under realistic tariff structures:
+
+- **Peak Hours (8 AM - 8 PM)**: ₹8.00/kWh
+- **Off-peak Hours**: ₹5.00/kWh
+- **Export Rate (to grid)**: ₹3.00/kWh (wholesale rate)
+
+**EMS Optimization Objective:**
+- Minimize peak-hour grid imports
+- Maximize solar utilization
+- Manage battery dispatch for cost reduction
+- Timing-aware load prioritization
+
+---
+
+### MATLAB/Simulink Implementation
+
+**Source Code Reference:** [Microgrid_code.m.txt](Microgrid_code.m.txt)
+
+The MATLAB code generates synthetic realistic electrical scenarios:
+
+```matlab
+% Key electrical parameters
+V = 230;           % Grid voltage (Volts)
+V_batt = 48;       % Battery voltage (Volts)
+dt = 0.001;        % Simulation timestep (seconds)
+E_batt = 300;      % Battery energy (Wh)
+P_batt_max = 1500; % Battery power limit (Watts)
+eta = 0.9;         % Battery efficiency (90%)
+```
+
+**Simulink Model:** [Microgrid_System.slx](Microgrid_System.slx/)
+
+The Simulink model provides:
+- Real-time electrical measurements visualization
+- Power flow simulation across all components
+- Dynamic load and solar profile generation
+- Battery SOC tracking and protection
+- Grid interaction analysis
+- Harmonic and stability analysis capabilities
+
+**Outputs Generated:**
+- 15-second simulation windows (0.001s resolution = 15,000 timesteps)
+- 6 preset scenarios with varying electrical characteristics
+- CSV datasets with Time, Load, Solar, Battery, Grid, SOC columns
+- Voltage/current waveforms (from Simulink)
+- Power quality metrics (THD, power factor, etc.)
+
+### Equipment Specifications (Practical Deployment)
+
+**Recommended Components for 3kW Residential System:**
+
+| Component | Specification | Typical Cost |
+|-----------|--------------|-------------|
+| **PV Panels** | 2kW (8-10 × 250W modules) | $2,000-3,000 |
+| **Inverter** | 3.5kW hybrid inverter (48V DC in) | $1,500-2,500 |
+| **Battery Pack** | 300Wh LiFePO₄ (48V 6S) | $1,800-2,500 |
+| **DC-DC Charger** | 60A MPPT controller | $300-500 |
+| **Wiring & Protection** | DC/AC breakers, cables | $500-800 |
+| **Installation Labor** | Professional setup | $1,000-2,000 |
+| **TOTAL SYSTEM** | Turnkey 3kW microgrid | **$7,100-11,300** |
+
+**Expected Payback Period:** 4-7 years (depending on location and tariffs)
+
+---
+
 ## 🚀 Installation & Setup
 
 ### Prerequisites
