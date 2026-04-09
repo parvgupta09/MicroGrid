@@ -4,10 +4,12 @@ Provides REST API for simulation, scenario generation, and optimization
 """
 
 import os
+from pathlib import Path
 from dotenv import load_dotenv
 from fastapi import FastAPI, HTTPException
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.staticfiles import StaticFiles
+from fastapi.responses import RedirectResponse
 from pydantic import BaseModel
 import numpy as np
 import pandas as pd
@@ -37,9 +39,11 @@ app.add_middleware(
     allow_headers=["*"],
 )
 
-frontend_path = os.path.join(os.path.dirname(__file__), "..", "frontend-showcase")
-if os.path.exists(frontend_path):
-    app.mount("/", StaticFiles(directory=frontend_path, html=True), name="frontend")
+frontend_path = Path(__file__).resolve().parent.parent / "frontend-showcase"
+frontend_available = frontend_path.exists()
+if frontend_available:
+    # Mount frontend under /frontend so API routes (e.g. /cases, /simulate) are not shadowed.
+    app.mount("/frontend", StaticFiles(directory=str(frontend_path), html=True), name="frontend")
 
 # ==================== Pydantic Models ====================
 
@@ -120,6 +124,18 @@ def _build_synthetic_scenario(
 
 @app.get("/")
 async def root():
+    if frontend_available:
+        return RedirectResponse(url="/frontend/")
+
+    return {
+        "status": "running",
+        "service": "Microgrid EMS API",
+        "version": "1.0.0"
+    }
+
+
+@app.get("/health")
+async def health():
     return {
         "status": "running",
         "service": "Microgrid EMS API",

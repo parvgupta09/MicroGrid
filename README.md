@@ -374,16 +374,14 @@ uvicorn app:app --reload --host 0.0.0.0 --port 8000
 
 ### Step 5: Access the Frontend
 
-**Option A: Direct File Access**
+Open frontend at:
 ```
-Open: file:///d:\Projects\microgrid\frontend-showcase\index.html
+http://localhost:8000/frontend/
 ```
 
-**Option B: Local HTTP Server (Recommended)**
-```bash
-cd frontend-showcase
-python -m http.server 8080
-# Then open: http://localhost:8080/index.html
+API health check:
+```
+http://localhost:8000/health
 ```
 
 ---
@@ -540,7 +538,7 @@ python app.py --port 8001
 
 ### "Connection refused" error?
 - Ensure FastAPI is running
-- Check API is accessible: `curl http://localhost:8000/`
+- Check API is accessible: `curl http://localhost:8000/health`
 
 ### CORS errors?
 - Frontend should access via `http://localhost:8000`

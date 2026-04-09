@@ -3,8 +3,55 @@
 // Chart.js + API Integration + Live Clock
 // ============================================================
 
-// Use current origin for API calls (works for both localhost and production)
-const API_URL = window.location.origin;
+// Prefer explicit API base, then same-origin, then local backend fallback.
+function getApiBaseCandidates() {
+    const candidates = [];
+    const explicitBase = window.__API_BASE_URL__ || document.querySelector('meta[name="api-base-url"]')?.content;
+    const currentOrigin = window.location.origin;
+
+    if (explicitBase) {
+        candidates.push(explicitBase);
+    }
+
+    if (currentOrigin && currentOrigin !== 'null' && currentOrigin !== 'file://') {
+        candidates.push(currentOrigin);
+    }
+
+    candidates.push('http://127.0.0.1:8000');
+
+    return [...new Set(candidates.map(base => base.replace(/\/+$/, '')))];
+}
+
+async function apiFetch(path, options = {}) {
+    const candidates = getApiBaseCandidates();
+    let lastResponse = null;
+    let lastError = null;
+
+    for (let i = 0; i < candidates.length; i++) {
+        const baseUrl = candidates[i];
+        try {
+            const response = await fetch(`${baseUrl}${path}`, options);
+            if (response.ok) {
+                return response;
+            }
+
+            lastResponse = response;
+
+            const canFallback = response.status === 404 || response.status === 405;
+            if (!canFallback || i === candidates.length - 1) {
+                return response;
+            }
+        } catch (err) {
+            lastError = err;
+        }
+    }
+
+    if (lastResponse) {
+        return lastResponse;
+    }
+
+    throw lastError || new Error(`Unable to reach API at ${path}`);
+}
 
 // State
 let simulationData = null;
@@ -350,7 +397,7 @@ function startClock() {
 // ===================== CASES =====================
 async function loadCases() {
     try {
-        const res = await fetch(`${API_URL}/cases`);
+        const res = await apiFetch('/cases');
         const data = await res.json();
         availableCases = data.cases;
         updateCaseSelector();
@@ -488,7 +535,7 @@ async function executeSimulation(body) {
     }
 
     try {
-        const res = await fetch(`${API_URL}/simulate`, {
+        const res = await apiFetch('/simulate', {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
             body: JSON.stringify(body),
