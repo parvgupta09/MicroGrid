@@ -83,12 +83,55 @@ class SimulationResponse(BaseModel):
     data: Optional[Dict[str, Any]] = None
 
 
+PRESET_CONFIG_OVERRIDES = {
+    "small_battery": {"battery_wh": 150.0, "battery_max_w": 600.0},
+    "large_battery": {"battery_wh": 800.0, "battery_max_w": 2500.0},
+}
+
+
 
 def _load_preset_case(case_name: str) -> Optional[pd.DataFrame]:
     cases = discover_case_files("Datasets")
     if case_name in cases:
         return pd.read_csv(cases[case_name])
     return None
+
+
+def _resolve_config(
+    config_params: Optional[ConfigParams],
+    case_name: Optional[str] = None,
+    scenario: Optional[pd.DataFrame] = None,
+) -> EMSConfig:
+    config_dict = config_params.dict() if config_params else {}
+
+    if case_name in PRESET_CONFIG_OVERRIDES:
+        for key, value in PRESET_CONFIG_OVERRIDES[case_name].items():
+            config_dict.setdefault(key, value)
+
+    if scenario is not None and "SOC" in scenario.columns:
+        try:
+            config_dict.setdefault("soc_init", float(scenario["SOC"].iloc[0]))
+        except Exception:
+            pass
+
+    return EMSConfig(**config_dict)
+
+
+def _apply_case_modifiers(scenario: pd.DataFrame, params: Optional[ScenarioParams]) -> pd.DataFrame:
+    if params is None:
+        return scenario
+
+    updated = scenario.copy()
+
+    solar_scale = float(params.solar_scale)
+    if solar_scale != 1.0:
+        load = updated["Load"].to_numpy(dtype=float)
+        solar = updated["Solar"].to_numpy(dtype=float) * solar_scale
+        solar = np.minimum(np.maximum(solar, 0.0), load)
+        updated["Solar"] = solar
+        updated["Grid"] = load - solar
+
+    return updated
 
 
 def _build_synthetic_scenario(
@@ -155,9 +198,8 @@ async def get_available_cases():
 @app.post("/simulate", response_model=SimulationResponse)
 async def run_simulation(request: SimulationRequest):
     try:
-        config_dict = request.config_params.dict() if request.config_params else {}
-        config = EMSConfig(**config_dict)
-        
+        config = _resolve_config(request.config_params, request.case_name)
+
         if request.case_name:
             scenario = _load_preset_case(request.case_name)
             if scenario is None:
@@ -165,6 +207,8 @@ async def run_simulation(request: SimulationRequest):
                     success=False,
                     message=f"Case '{request.case_name}' not found"
                 )
+            scenario = _apply_case_modifiers(scenario, request.scenario_params)
+            config = _resolve_config(request.config_params, request.case_name, scenario)
         elif request.scenario_params:
             params = request.scenario_params
             scenario = _build_synthetic_scenario(
@@ -192,6 +236,7 @@ async def run_simulation(request: SimulationRequest):
             success=True,
             message="Simulation completed successfully",
             data={
+                "case_name": request.case_name or "synthetic",
                 "time": time_array,
                 "baseline": {
                     "grid": scenario["Grid"].tolist(),
@@ -213,6 +258,8 @@ async def run_simulation(request: SimulationRequest):
                     "dt": config.dt,
                     "duration": config.sim_duration,
                     "battery_wh": config.battery_wh,
+                    "battery_max_w": config.battery_max_w,
+                    "soc_init": config.soc_init,
                 }
             }
         )
@@ -273,11 +320,13 @@ async def load_preset_scenario(case_name: str):
 async def run_rule_based_ems(request: SimulationRequest):
     """Run rule-based EMS on a scenario"""
     try:
-        config_dict = request.config_params.dict() if request.config_params else {}
-        config = EMSConfig(**config_dict)
+        config = _resolve_config(request.config_params, request.case_name)
         
         if request.case_name:
             scenario = _load_preset_case(request.case_name)
+            if scenario is None:
+                raise HTTPException(status_code=404, detail=f"Case '{request.case_name}' not found")
+            config = _resolve_config(request.config_params, request.case_name, scenario)
         else:
             params = request.scenario_params or ScenarioParams()
             scenario = _build_synthetic_scenario(
@@ -305,11 +354,13 @@ async def run_rule_based_ems(request: SimulationRequest):
 async def run_fuzzy_ems(request: SimulationRequest):
     """Run fuzzy EMS on a scenario"""
     try:
-        config_dict = request.config_params.dict() if request.config_params else {}
-        config = EMSConfig(**config_dict)
+        config = _resolve_config(request.config_params, request.case_name)
         
         if request.case_name:
             scenario = _load_preset_case(request.case_name)
+            if scenario is None:
+                raise HTTPException(status_code=404, detail=f"Case '{request.case_name}' not found")
+            config = _resolve_config(request.config_params, request.case_name, scenario)
         else:
             params = request.scenario_params or ScenarioParams()
             scenario = _build_synthetic_scenario(

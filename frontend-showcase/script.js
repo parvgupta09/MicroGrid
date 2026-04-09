@@ -66,6 +66,14 @@ let energyChart, comparisonChart, socChart;
 // Available cases
 let availableCases = [];
 
+function formatCurrencyINR(value) {
+    const amount = Number(value) || 0;
+    const abs = Math.abs(amount);
+    if (abs >= 1) return `Rs ${amount.toFixed(2)}`;
+    if (abs >= 0.01) return `Rs ${amount.toFixed(4)}`;
+    return `Rs ${amount.toFixed(6)}`;
+}
+
 // ===================== ANTIGRAVITY CANVAS LAUNCH SCREEN =====================
 
 function initElectricalGrid() {
@@ -445,13 +453,14 @@ function setupEvents() {
                 // Preset case: hide manual controls
                 if (manualControls) manualControls.classList.add('hidden');
                 log(`Preset case selected: ${e.target.value}`, 'info');
+                runSimulationFromUI();
             }
         });
     }
 
     // Time slot selection handlers
     const timeSlotConfigs = {
-        morning:   0.4,
+        morning:   0.5,
         afternoon: 0.9,
         evening:   0.3,
         night:     0.0
@@ -468,6 +477,11 @@ function setupEvents() {
             if (solarInput) {
                 solarInput.value = timeSlotConfigs[slot];
                 solarInput.dispatchEvent(new Event('input'));
+            }
+
+            const selectedCase = document.getElementById('case-selector')?.value;
+            if (selectedCase) {
+                runSimulationFromUI();
             }
         });
     });
@@ -502,7 +516,7 @@ function setupEvents() {
 // ===================== SIMULATION =====================
 async function runDefaultSimulation() {
     log('Starting default simulation…', 'info');
-    await executeSimulation({});
+    await runSimulationFromUI();
 }
 
 async function runSimulationFromUI() {
@@ -511,13 +525,16 @@ async function runSimulationFromUI() {
 
     if (caseName) {
         body.case_name = caseName;
+        body.scenario_params = {
+            solar_scale: parseFloat(document.getElementById('solar-scale')?.value || 0.5),
+        };
         log(`Loading preset: ${caseName}`, 'info');
     } else {
         body.scenario_params = {
             load1:       parseFloat(document.getElementById('load1')?.value || 100),
             load2:       parseFloat(document.getElementById('load2')?.value || 150),
             load3:       parseFloat(document.getElementById('load3')?.value || 200),
-            solar_scale: parseFloat(document.getElementById('solar-scale')?.value || 0.8),
+            solar_scale: parseFloat(document.getElementById('solar-scale')?.value || 0.5),
             battery_wh:  parseFloat(document.getElementById('battery-wh')?.value || 300),
             soc_init:    0.5,
         };
@@ -609,6 +626,16 @@ function updateAllUI() {
 
     updateKPIs();
     updateCostPanel(cost_comparison);
+
+    const cfg = simulationData.config || {};
+    const activeCase = simulationData.case_name || 'synthetic';
+    const configSummary = [
+        `Active case: ${String(activeCase).replace(/_/g, ' ')}`,
+        `Battery: ${Number(cfg.battery_wh || 0).toFixed(0)} Wh`,
+        `Battery max power: ${Number(cfg.battery_max_w || 0).toFixed(0)} W`,
+        `SOC init: ${((Number(cfg.soc_init || 0.5)) * 100).toFixed(0)}%`
+    ].join(' | ');
+    setText('active-case-config', configSummary);
 }
 
 function downsample(arr, step) {
@@ -682,20 +709,27 @@ function updateKPIs() {
 function updateCostPanel(costData) {
     if (!costData || costData.length === 0) return;
 
-    const baseline = costData.find(c => c.Mode === 'baseline');
-    const fuzzy    = costData.find(c => c.Mode === 'fuzzy');
+    const normalizeMode = value => String(value || '').trim().toLowerCase();
+    const baseline = costData.find(c => normalizeMode(c.Mode) === 'baseline');
+    const fuzzy = costData.find(c => normalizeMode(c.Mode) === 'fuzzy' || normalizeMode(c.Mode) === 'fuzzy_logic');
+    const ruleBased = costData.find(c => normalizeMode(c.Mode) === 'rule_based' || normalizeMode(c.Mode) === 'rule');
 
     if (baseline) {
-        setText('current-cost', `₹${baseline.cost_rs.toFixed(2)} / cycle`);
+        setText('current-cost', `${formatCurrencyINR(baseline.cost_rs)} / cycle`);
     }
     if (fuzzy && baseline) {
         const saving = baseline.cost_rs - fuzzy.cost_rs;
-        setText('savings', `+₹${saving.toFixed(2)} saved`);
+        setText('savings', `${saving >= 0 ? '+' : ''}${formatCurrencyINR(saving)} saved`);
         const pct = baseline.cost_rs > 0 ? (saving / baseline.cost_rs * 100) : 0;
         const fillEl = document.getElementById('eff-fill');
         const pctEl  = document.getElementById('eff-pct');
         if (fillEl) fillEl.style.width = Math.max(0, Math.min(100, pct)) + '%';
         if (pctEl)  pctEl.textContent  = pct.toFixed(0) + '%';
+
+        if (ruleBased) {
+            const ruleSaving = baseline.cost_rs - ruleBased.cost_rs;
+            log(`Cost summary: Baseline ${formatCurrencyINR(baseline.cost_rs)}, Rule ${formatCurrencyINR(ruleBased.cost_rs)} (${ruleSaving >= 0 ? '+' : ''}${formatCurrencyINR(ruleSaving)}), Fuzzy ${formatCurrencyINR(fuzzy.cost_rs)} (${saving >= 0 ? '+' : ''}${formatCurrencyINR(saving)})`, 'info');
+        }
     }
 }
 

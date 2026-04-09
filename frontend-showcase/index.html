@@ -161,7 +161,7 @@
                         </tr>
                         <tr class="table-row">
                             <td class="param-name"><i class="fa-solid fa-sun"></i> Solar Scale</td>
-                            <td class="param-value"><span id="modal-solar">0.8</span></td>
+                            <td class="param-value"><span id="modal-solar">0.5</span></td>
                             <td class="param-range">0 - 2.0</td>
                             <td class="param-unit">×</td>
                         </tr>
@@ -299,6 +299,7 @@
                     <select id="case-selector" class="form-control">
                         <option value="">— Synthetic Scenario —</option>
                     </select>
+                    <div class="case-config-note" id="active-case-config">Active case: synthetic | Battery: 300 Wh | Battery max power: 1500 W | SOC init: 50%</div>
                 </div>
 
                 <div class="form-divider"></div>
@@ -319,7 +320,7 @@
                     </div>
                     <div class="form-group">
                         <label class="form-label" for="solar-scale">Solar Scale</label>
-                        <input type="number" id="solar-scale" class="form-control" value="0.8" min="0" max="2" step="0.1">
+                        <input type="number" id="solar-scale" class="form-control" value="0.5" min="0" max="2" step="0.1">
                     </div>
                     <div class="form-group">
                         <label class="form-label" for="battery-wh">Battery Capacity (Wh)</label>
@@ -600,83 +601,95 @@
             </div>
             <div class="help-modal-body">
                 <div>
-                    <h3><i class="fa-solid fa-lightbulb"></i> What is This?</h3>
-                    <p>This is an <strong>Intelligent Microgrid Energy Management System (EMS)</strong> that demonstrates how advanced control algorithms optimize power distribution in renewable energy systems.</p>
+                    <h3><i class="fa-solid fa-lightbulb"></i> What This Dashboard Shows</h3>
+                    <p>This dashboard simulates an <strong>Intelligent Microgrid Energy Management System (EMS)</strong>. It compares a conventional <strong>Rule-Based controller</strong> and a <strong>Fuzzy Logic controller</strong> under the same load, solar, and battery conditions.</p>
                 </div>
                 <div>
-                    <h3><i class="fa-solid fa-cog"></i> How It Works</h3>
-                    <p>The system compares two optimization algorithms:</p>
+                    <h3><i class="fa-solid fa-cog"></i> Controllers Explained</h3>
                     <ul>
-                        <li><strong>Rule-Based Control:</strong> Uses IF-THEN logic based on battery state and power deficit</li>
-                        <li><strong>Fuzzy Logic Control:</strong> Uses soft membership functions for smoother decisions</li>
+                        <li><strong>Rule-Based EMS:</strong> Hard IF-THEN rules dispatch battery power from deficit and SOC thresholds. It is deterministic and easy to audit.</li>
+                        <li><strong>Fuzzy Logic EMS:</strong> Uses membership functions (low, medium, high) for deficit and SOC, then defuzzifies a smooth battery setpoint. It is softer and less abrupt than hard thresholds.</li>
+                        <li><strong>Baseline:</strong> Reference case without intelligent dispatch improvement, used to calculate savings and efficiency.</li>
                     </ul>
                 </div>
                 <div>
-                    <h3><i class="fa-solid fa-play"></i> Getting Started</h3>
+                    <h3><i class="fa-solid fa-sliders"></i> Input Parameters</h3>
+                    <ul>
+                        <li><strong>Load 1, Load 2, Load 3 (kW):</strong> Independent demand components. Total load is their combined profile.</li>
+                        <li><strong>Solar Scale (0 to 2):</strong> Multiplier for solar generation profile. 0 means no solar, 1 means nominal profile, &gt;1 means stronger generation.</li>
+                        <li><strong>Battery Capacity (Wh):</strong> Stored energy available for charge/discharge over time.</li>
+                        <li><strong>Battery Max Power (W):</strong> Power ceiling for charge/discharge action. This is applied internally by the selected case.</li>
+                        <li><strong>SOC (State of Charge):</strong> Battery energy ratio from 0 to 1. Dashboard typically uses 20% to 90% safe band.</li>
+                        <li><strong>Time Scenario buttons:</strong> Quick presets that set Solar Scale for morning/afternoon/evening/night.</li>
+                    </ul>
+                    <p><strong>Quick Tuning Guide:</strong></p>
+                    <ul>
+                        <li><strong>Increase Load 1/2/3:</strong> Higher demand, usually higher grid import and higher cycle cost.</li>
+                        <li><strong>Decrease Load 1/2/3:</strong> Lower demand, easier for solar and battery to meet load.</li>
+                        <li><strong>Increase Solar Scale:</strong> More PV contribution, usually lower grid import and better savings.</li>
+                        <li><strong>Decrease Solar Scale:</strong> Less PV support, grid and battery must supply more.</li>
+                        <li><strong>Increase Battery Capacity:</strong> More stored energy buffer; improves ability to shift energy across time.</li>
+                        <li><strong>Decrease Battery Capacity:</strong> Battery saturates/depletes faster; less support during deficit periods.</li>
+                        <li><strong>Higher SOC start:</strong> More immediate discharge headroom for deficit handling.</li>
+                        <li><strong>Lower SOC start:</strong> Controller preserves battery first; grid usage can increase initially.</li>
+                    </ul>
+                </div>
+                <div>
+                    <h3><i class="fa-solid fa-play"></i> How to Use</h3>
                     <ol>
-                        <li><strong>Select a Case:</strong> Choose from 6 preset cases (Residential, Industrial, etc.) or use Synthetic Scenario for custom parameters</li>
-                        <li><strong>Configure Time Period:</strong> Select Morning/Afternoon/Evening/Night to adjust solar generation levels</li>
-                        <li><strong>Run Simulation:</strong> Click the "Run Simulation" button to execute the control algorithms</li>
-                        <li><strong>View Results:</strong> Check Metrics for key performance indicators and Charts for detailed analysis</li>
-                        <li><strong>Animate:</strong> Click Play to watch the simulation unfold second-by-second</li>
+                        <li>Select a preset case or keep Synthetic Scenario for manual inputs.</li>
+                        <li>Set time scenario and parameters, then run simulation.</li>
+                        <li>Compare Rule-Based vs Fuzzy cards and the grid/SOC charts.</li>
+                        <li>Use animation controls to inspect transient behavior.</li>
                     </ol>
                 </div>
                 <div>
-                    <h3><i class="fa-solid fa-chart-line"></i> Understanding the Dashboard</h3>
+                    <h3><i class="fa-solid fa-chart-line"></i> Metrics and Charts</h3>
                     <div class="help-grid">
                         <div class="help-item">
-                            <strong>Cost Optimization:</strong> Shows baseline cost vs optimization savings and efficiency percentage
+                            <strong>Solar Generation:</strong> Average solar output over the simulation window.
                         </div>
                         <div class="help-item">
-                            <strong>Metrics:</strong> Real-time solar output, battery charge level, load demand, and grid power
+                            <strong>Battery SOC:</strong> Peak battery state-of-charge reached by the controller.
                         </div>
                         <div class="help-item">
-                            <strong>Charts:</strong> Visualizes energy flow, algorithm performance, and battery behavior over time
+                            <strong>Grid Power:</strong> Import/export demand from utility after solar and battery contribution.
                         </div>
                         <div class="help-item">
-                            <strong>Logs:</strong> System messages and algorithm decisions as they happen
+                            <strong>Grid Improvement (%):</strong> Relative reduction in average grid dependence vs baseline.
                         </div>
                     </div>
                 </div>
                 <div>
-                    <h3><i class="fa-solid fa-database"></i> Preset Cases Explained</h3>
+                    <h3><i class="fa-solid fa-indian-rupee-sign"></i> Cost Panel Meaning</h3>
                     <ul>
-                        <li><strong>Residential:</strong> Typical home energy consumption pattern</li>
-                        <li><strong>Industrial:</strong> High-power industrial facility with consistent demand</li>
-                        <li><strong>High Solar:</strong> Abundant solar capacity scenario</li>
-                        <li><strong>Low Solar:</strong> Limited solar generation scenario</li>
-                        <li><strong>Small Battery:</strong> Microgrid with limited storage capacity</li>
-                        <li><strong>Large Battery:</strong> Microgrid with high battery capacity</li>
+                        <li><strong>Baseline Cost:</strong> Cost of baseline grid profile for one simulation cycle.</li>
+                        <li><strong>Optimization Savings:</strong> Baseline cost minus optimized cost (currently displayed for fuzzy result).</li>
+                        <li><strong>Optimization Efficiency (%):</strong> Savings as percent of baseline cost.</li>
+                        <li><strong>Why cost can look very small:</strong> One cycle is only a short simulation window, so absolute Rs can be tiny. Dashboard now shows higher precision for very small values.</li>
                     </ul>
                 </div>
                 <div>
-                    <h3><i class="fa-solid fa-wrench"></i> Manual Controls (Synthetic Scenario)</h3>
-                    <p>When you select "Synthetic Scenario", you can manually adjust:</p>
+                    <h3><i class="fa-solid fa-database"></i> Preset Cases</h3>
                     <ul>
-                        <li><strong>Load 1, 2, 3:</strong> Three independent power consumption sources (0-500 kW each)</li>
-                        <li><strong>Solar Scale:</strong> Solar generation level (0-1 scale, or use time period buttons)</li>
-                        <li><strong>Battery Capacity:</strong> Available battery storage size (50-1000 Wh)</li>
+                        <li><strong>Residential:</strong> Typical household load profile.</li>
+                        <li><strong>Industrial:</strong> Higher and steadier demand profile.</li>
+                        <li><strong>High Solar:</strong> Strong PV profile, usually lower grid dependence.</li>
+                        <li><strong>Low Solar:</strong> Weak PV profile, usually higher grid dependence.</li>
+                        <li><strong>Small Battery:</strong> Lower battery capacity and dispatch limit.</li>
+                        <li><strong>Large Battery:</strong> Higher battery capacity and dispatch limit.</li>
                     </ul>
                 </div>
                 <div>
-                    <h3><i class="fa-solid fa-flask-vial"></i> Electrical Perspective</h3>
-                    <p><strong>Mathematical Foundation:</strong> The system is built on fundamental electrical engineering principles and energy optimization equations.</p>
-                    <div style="background: #f8fafc; padding: 12px; border-radius: 8px; margin: 12px 0; font-family: var(--font-mono); font-size: 12px; color: #0f172a; line-height: 1.8; border-left: 3px solid var(--brand);"><strong>Key Equations:</strong><br/><br/>• <strong>Power Balance:</strong> P_load = P_solar + P_battery + P_grid<br/><br/>• <strong>Energy:</strong> E = P × Δt (Watt-hours)<br/><br/>• <strong>Battery SOC:</strong> SOC(t) = SOC(t-1) + (P_batt × Δt) / (Battery_Capacity × 3600)<br/><br/>• <strong>Cost:</strong> Cost = Σ(P_grid × Tariff × Δt / 3600)<br/><br/>• <strong>Grid Power:</strong> P_grid = max(0, P_load - P_solar - P_batt_discharge)<br/><br/>• <strong>Battery Dispatch (Fuzzy):</strong> P_batt_ref = f(Deficit_Membership, SOC_Membership) via defuzzification</div>
-                    <p><strong>Control Objectives:</strong></p>
-                    <ul>
-                        <li>Minimize grid power purchase during peak tariff hours</li>
-                        <li>Maintain battery SOC within safe limits (20-90%)</li>
-                        <li>Maximize renewable energy utilization</li>
-                        <li>Ensure all loads are served with priority allocation</li>
-                    </ul>
-                    <p><strong>System Parameters:</strong> Battery capacity ranges (50-1000 Wh), Solar generation (0-100%), Load consumption (0-500 kW per phase), Peak tariff: ₹8/kWh, Off-peak: ₹5/kWh</p>
+                    <h3><i class="fa-solid fa-book"></i> Active Case Configuration</h3>
+                    <p>Below the case selector you can now see the active case summary: selected case, battery capacity, battery max power, and initial SOC. This confirms exactly what the simulator is using.</p>
                 </div>
                 <div>
+                    <h3><i class="fa-solid fa-wrench"></i> Notes for Manual Mode</h3>
                     <ul>
-                        <li>Try the same case at different time periods to see how solar affects optimization</li>
-                        <li>Compare scenarios: high battery vs low battery to understand storage importance</li>
-                        <li>Use the Animate feature to understand algorithm decision-making in real-time</li>
-                        <li>Check the Logs panel to see detailed system messages and decisions</li>
+                        <li>Manual controls are active only in Synthetic Scenario mode.</li>
+                        <li>Default Solar Scale is set to <strong>0.5</strong>.</li>
+                        <li>For consistent comparisons, keep one parameter fixed while varying one other parameter at a time.</li>
                     </ul>
                 </div>
             </div>

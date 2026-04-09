@@ -1243,6 +1243,17 @@ input, select { font-family: var(--font); }
     flex-direction: column;
 }
 
+.case-config-note {
+    margin-top: var(--sp-2);
+    padding: var(--sp-2) var(--sp-3);
+    border: 1px solid var(--border);
+    border-radius: var(--radius-sm);
+    background: var(--surface-2);
+    color: var(--text-secondary);
+    font-size: 12px;
+    line-height: 1.5;
+}
+
 /* Time Slot Grid */
 .time-slot-grid {
     display: grid;
