@@ -1,0 +1,105 @@
+clc;
+clear;
+
+t = 0:0.001:15;
+dt = t(2)-t(1);
+
+V = 230;
+V_batt = 48;
+
+cases = {'residential','industrial','high_solar','low_solar','small_battery','large_battery'};
+
+for c = 1:length(cases)
+
+    case_type = cases{c};
+
+    %% ===== LOADS =====
+
+    if strcmp(case_type,'residential') || strcmp(case_type,'high_solar') || strcmp(case_type,'low_solar')
+
+        P_load2 = 1500 * (1 - 0.8*exp(-((t-4).^2)/0.6));
+        P_load3 = 1200 * (1 - 0.8*exp(-((t-3.5).^2)/0.9));
+
+    else
+        % industrial + battery cases
+        P_load2 = 3000 * (1 - 0.9*exp(-((t-4).^2)/0.4));
+        P_load3 = 2500 * (1 - 0.9*exp(-((t-3.5).^2)/0.6));
+    end
+
+    P_load_total = P_load2 + P_load3;
+
+    %% ===== SOLAR =====
+
+    solar_scale = 1;
+
+    if strcmp(case_type,'high_solar')
+        solar_scale = 1.5;
+    elseif strcmp(case_type,'low_solar')
+        solar_scale = 0.5;
+    end
+
+    P_solar_base = solar_scale * 2000 * (1 ./ (1 + exp(-(t-5)))) .* exp(-((t-10).^2)/30);
+    P_solar_base(t < 3) = 0;
+
+    P_solar = min(P_solar_base, P_load_total);
+
+    %% ===== BATTERY SETTINGS =====
+
+    if strcmp(case_type,'small_battery')
+        E_batt = 150;
+    elseif strcmp(case_type,'large_battery')
+        E_batt = 800;
+    else
+        E_batt = 300;
+    end
+
+    P_batt_max = 1500;
+    eta = 0.9;
+
+    SOC = zeros(size(t));
+    SOC(1) = 0.5;
+
+    P_battery = zeros(size(t));
+
+    %% ===== EMS =====
+
+    for i = 2:length(t)
+
+        P_req = 0.6 * (P_load_total(i) - P_solar(i));
+
+        if P_req > 0
+            P_req = P_req / eta;
+        else
+            P_req = P_req * eta;
+        end
+
+        P_req = max(min(P_req, P_batt_max), -P_batt_max);
+
+        if SOC(i-1) >= 0.9 && P_req < 0
+            P_req = 0;
+        end
+
+        if SOC(i-1) <= 0.2 && P_req > 0
+            P_req = 0;
+        end
+
+        P_battery(i) = P_req;
+
+        SOC(i) = SOC(i-1) - (P_battery(i)*dt)/3600/E_batt;
+    end
+
+    %% ===== GRID =====
+
+    P_grid = P_load_total - (P_solar + P_battery);
+
+    %% ===== SAVE =====
+
+    data = table(t',P_load_total',P_solar',P_battery',P_grid',SOC',...
+        'VariableNames',{'Time','Load','Solar','Battery','Grid','SOC'});
+
+    filename = [case_type '_data.csv'];
+    writetable(data, filename);
+
+    disp(['Saved: ', filename]);
+
+end

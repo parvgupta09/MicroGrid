@@ -1,0 +1,688 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Intelligent Microgrid — Smart Energy Management System</title>
+    <meta name="description" content="Smart Microgrid Energy Management System with Rule-Based and Fuzzy Logic control algorithms for optimized real-time energy distribution.">
+
+    <!-- Fonts -->
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+    <!-- Font Awesome -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
+    <!-- Chart.js -->
+    <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.1/dist/chart.umd.min.js"></script>
+    <!-- Styles -->
+    <link rel="stylesheet" href="styles.css">
+</head>
+<body>
+
+    <!-- ===== ANTIGRAVITY LAUNCH SCREEN ===== -->
+    <div class="splash-screen" id="splash-screen">
+
+        <!-- Full-screen animated canvas (star particles + energy arcs) -->
+        <canvas id="splash-canvas"></canvas>
+
+        <!-- Radial glow overlay -->
+        <div class="splash-glow-overlay"></div>
+
+        <!-- CRT scanlines -->
+        <div class="splash-scanlines"></div>
+
+        <!-- Cinematic corner brackets -->
+        <div class="splash-bracket tl"></div>
+        <div class="splash-bracket tr"></div>
+        <div class="splash-bracket bl"></div>
+        <div class="splash-bracket br"></div>
+
+        <!-- Main content -->
+        <div class="splash-content">
+
+            <!-- Top status -->
+            <div class="splash-status-bar">
+                <div class="splash-status-dot"></div>
+                <span>EMS CORE ONLINE</span>
+                <span style="opacity:0.4">|</span>
+                <span>v2.0.0</span>
+                <span style="opacity:0.4">|</span>
+                <span>INDIA GRID LINK</span>
+            </div>
+
+            <!-- Animated energy orb -->
+            <div class="splash-orb-cluster">
+                <div class="orb-core"></div>
+                <div class="orb-ring"></div>
+                <div class="orb-ring"></div>
+                <div class="orb-ring"></div>
+                <!-- Satellite nodes: Solar, Battery, Grid -->
+                <div class="orb-satellite" title="Solar"></div>
+                <div class="orb-satellite" title="Battery"></div>
+                <div class="orb-satellite" title="Grid"></div>
+            </div>
+
+            <!-- Boot progress bar -->
+            <div class="splash-progress-wrap">
+                <div class="splash-progress-label">
+                    <span>System Initializing</span>
+                    <span id="splash-pct">100%</span>
+                </div>
+                <div class="splash-progress-track">
+                    <div class="splash-progress-fill"></div>
+                </div>
+            </div>
+
+            <!-- Holographic title with glitch -->
+            <h1 class="splash-title" data-text="Intelligent Microgrid">
+                <span class="title-micro">// intelligent energy management</span>
+                <span class="title-main">Intelligent<br>Microgrid</span>
+            </h1>
+
+            <!-- Subtitle -->
+            <p class="splash-subtitle">
+                <span class="sub-sep"></span>
+                Fuzzy Logic &amp; Rule-Based Control Optimization
+                <span class="sub-sep"></span>
+            </p>
+
+            <!-- Boot terminal -->
+            <div class="splash-terminal" id="splash-terminal">
+                <span class="term-line" id="term-1"></span>
+                <span class="term-line" id="term-2"></span>
+                <span class="term-cursor"></span>
+            </div>
+
+            <!-- Feature badges -->
+            <div class="splash-features">
+                <div class="feature-badge">
+                    <i class="fa-solid fa-sun"></i>
+                    <span>Solar 24/7</span>
+                </div>
+                <div class="feature-badge">
+                    <i class="fa-solid fa-brain"></i>
+                    <span>Fuzzy Logic</span>
+                </div>
+                <div class="feature-badge">
+                    <i class="fa-solid fa-microchip"></i>
+                    <span>Rule-Based</span>
+                </div>
+                <div class="feature-badge">
+                    <i class="fa-solid fa-bolt-lightning"></i>
+                    <span>Real-Time</span>
+                </div>
+            </div>
+
+            <!-- Electric launch button -->
+            <button class="splash-btn" id="splash-btn">
+                <i class="fa-solid fa-bolt-lightning"></i>
+                <span>Launch Dashboard</span>
+                <i class="fa-solid fa-arrow-right"></i>
+            </button>
+
+        </div>
+    </div>
+
+    <!-- ===== SYNTHETIC SCENARIO MODAL ===== -->
+    <div class="modal" id="scenario-modal">
+        <div class="modal-overlay"></div>
+        <div class="modal-content">
+            <div class="modal-header">
+                <h2>Synthetic Scenario Configuration</h2>
+                <button class="modal-close" id="modal-close">&times;</button>
+            </div>
+            
+            <div class="modal-body">
+                <table class="scenario-table">
+                    <thead>
+                        <tr>
+                            <th>Parameter</th>
+                            <th>Value</th>
+                            <th>Range</th>
+                            <th>Unit</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        <tr class="table-row">
+                            <td class="param-name"><i class="fa-solid fa-plug"></i> Load 1</td>
+                            <td class="param-value"><span id="modal-load1">100</span></td>
+                            <td class="param-range">0 - 500</td>
+                            <td class="param-unit">kW</td>
+                        </tr>
+                        <tr class="table-row">
+                            <td class="param-name"><i class="fa-solid fa-plug"></i> Load 2</td>
+                            <td class="param-value"><span id="modal-load2">150</span></td>
+                            <td class="param-range">0 - 500</td>
+                            <td class="param-unit">kW</td>
+                        </tr>
+                        <tr class="table-row">
+                            <td class="param-name"><i class="fa-solid fa-plug"></i> Load 3</td>
+                            <td class="param-value"><span id="modal-load3">200</span></td>
+                            <td class="param-range">0 - 500</td>
+                            <td class="param-unit">kW</td>
+                        </tr>
+                        <tr class="table-row">
+                            <td class="param-name"><i class="fa-solid fa-sun"></i> Solar Scale</td>
+                            <td class="param-value"><span id="modal-solar">0.8</span></td>
+                            <td class="param-range">0 - 2.0</td>
+                            <td class="param-unit">×</td>
+                        </tr>
+                        <tr class="table-row">
+                            <td class="param-name"><i class="fa-solid fa-battery-full"></i> Battery Capacity</td>
+                            <td class="param-value"><span id="modal-battery">300</span></td>
+                            <td class="param-range">100 - 1000</td>
+                            <td class="param-unit">Wh</td>
+                        </tr>
+                        <tr class="table-row total">
+                            <td class="param-name"><strong>Total Load</strong></td>
+                            <td class="param-value"><strong><span id="modal-total">450</span></strong></td>
+                            <td class="param-range">—</td>
+                            <td class="param-unit">kW</td>
+                        </tr>
+                    </tbody>
+                </table>
+            </div>
+            
+            <div class="modal-footer">
+                <button class="modal-btn secondary" id="modal-edit-btn">
+                    <i class="fa-solid fa-edit"></i> Edit Parameters
+                </button>
+                <button class="modal-btn primary" id="modal-confirm-btn">
+                    <i class="fa-solid fa-check"></i> Proceed
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <!-- ===== SIDEBAR ===== -->
+    <aside class="sidebar" id="sidebar">
+        <div class="sidebar-brand">
+            <div class="brand-icon">
+                <i class="fa-solid fa-bolt-lightning"></i>
+            </div>
+            <div class="brand-text">
+                <span class="brand-name">Microgrid</span>
+                <span class="brand-sub">EMS Dashboard</span>
+            </div>
+        </div>
+
+        <nav class="sidebar-nav">
+            <a href="#control-section" class="nav-item active" id="nav-control">
+                <i class="fa-solid fa-sliders"></i>
+                <span>Controls</span>
+            </a>
+            <a href="#metrics-section" class="nav-item" id="nav-metrics">
+                <i class="fa-solid fa-gauge-high"></i>
+                <span>Metrics</span>
+            </a>
+            <a href="#charts-section" class="nav-item" id="nav-charts">
+                <i class="fa-solid fa-chart-area"></i>
+                <span>Charts</span>
+            </a>
+            <a href="#log-section" class="nav-item" id="nav-log">
+                <i class="fa-solid fa-terminal"></i>
+                <span>Logs</span>
+            </a>
+            <a href="#" class="nav-item" id="nav-help" onclick="openHelpModal(); return false;">
+                <i class="fa-solid fa-circle-question"></i>
+                <span>Help</span>
+            </a>
+        </nav>
+
+        <div class="sidebar-status">
+            <div class="status-indicator" id="connection-status">
+                <span class="status-dot"></span>
+                <span class="status-text">System Live</span>
+            </div>
+            <div class="sidebar-clock" id="header-clock">00:00:00</div>
+        </div>
+    </aside>
+
+    <!-- ===== MAIN CONTENT ===== -->
+    <div class="main-content">
+
+        <!-- Top bar -->
+        <header class="topbar">
+            <div class="topbar-left">
+                <h1 class="page-title">Energy Management System</h1>
+                <p class="page-sub">Intelligent Microgrid — Smart Optimization Simulation</p>
+            </div>
+            <div class="topbar-right">
+                <div class="topbar-badge">
+                    <i class="fa-solid fa-code-branch"></i>
+                    v2.0.0
+                </div>
+                <div class="topbar-badge highlight">
+                    <i class="fa-solid fa-graduation-cap"></i>
+                    Research Project
+                </div>
+            </div>
+        </header>
+
+        <!-- ===== CONTROL SECTION ===== -->
+        <section class="panel" id="control-section">
+            <div class="panel-header">
+                <div class="panel-title">
+                    <i class="fa-solid fa-sliders panel-icon"></i>
+                    <h2>Simulation Control</h2>
+                </div>
+                <span class="panel-badge">Configure & Run</span>
+            </div>
+
+            <div class="panel-body">
+                <!-- Time Scenario -->
+                <div class="form-group">
+                    <label class="form-label">Time Scenario</label>
+                    <div class="time-slot-grid">
+                        <button class="time-slot" id="slot-morning" data-time="morning">
+                            <i class="fa-solid fa-sun"></i>
+                            <span>Morning</span>
+                        </button>
+                        <button class="time-slot" id="slot-afternoon" data-time="afternoon">
+                            <i class="fa-solid fa-cloud-sun"></i>
+                            <span>Afternoon</span>
+                        </button>
+                        <button class="time-slot" id="slot-evening" data-time="evening">
+                            <i class="fa-solid fa-cloud"></i>
+                            <span>Evening</span>
+                        </button>
+                        <button class="time-slot" id="slot-night" data-time="night">
+                            <i class="fa-solid fa-moon"></i>
+                            <span>Night</span>
+                        </button>
+                    </div>
+                </div>
+
+                <div class="form-divider"></div>
+
+                <!-- Case Selector (Always Visible) -->
+                <div class="form-group">
+                    <label class="form-label" for="case-selector">Select Case</label>
+                    <select id="case-selector" class="form-control">
+                        <option value="">— Synthetic Scenario —</option>
+                    </select>
+                </div>
+
+                <div class="form-divider"></div>
+
+                <!-- Parameters Grid (Manual Controls) -->
+                <div class="params-grid" id="manual-controls">
+                    <div class="form-group">
+                        <label class="form-label" for="load1">Load 1 (kW)</label>
+                        <input type="number" id="load1" class="form-control" value="100" min="0" max="500" step="10">
+                    </div>
+                    <div class="form-group">
+                        <label class="form-label" for="load2">Load 2 (kW)</label>
+                        <input type="number" id="load2" class="form-control" value="150" min="0" max="500" step="10">
+                    </div>
+                    <div class="form-group">
+                        <label class="form-label" for="load3">Load 3 (kW)</label>
+                        <input type="number" id="load3" class="form-control" value="200" min="0" max="500" step="10">
+                    </div>
+                    <div class="form-group">
+                        <label class="form-label" for="solar-scale">Solar Scale</label>
+                        <input type="number" id="solar-scale" class="form-control" value="0.8" min="0" max="2" step="0.1">
+                    </div>
+                    <div class="form-group">
+                        <label class="form-label" for="battery-wh">Battery Capacity (Wh)</label>
+                        <input type="number" id="battery-wh" class="form-control" value="300" min="100" max="1000" step="50">
+                    </div>
+                </div>
+
+                <!-- Action Buttons -->
+                <div class="action-bar">
+                    <button id="run-simulation-btn" class="btn btn-primary">
+                        <i class="fa-solid fa-play"></i>
+                        Run Simulation
+                    </button>
+                    <button id="play-btn" class="btn btn-secondary">
+                        <i class="fa-solid fa-forward"></i>
+                        Animate
+                    </button>
+                    <button id="pause-btn" class="btn btn-ghost">
+                        <i class="fa-solid fa-pause"></i>
+                        Pause
+                    </button>
+                    <button id="reset-btn" class="btn btn-ghost">
+                        <i class="fa-solid fa-rotate-left"></i>
+                        Reset
+                    </button>
+                </div>
+            </div>
+        </section>
+
+        <!-- ===== METRICS ROW ===== -->
+        <section class="metrics-row" id="metrics-section">
+            <!-- Solar -->
+            <div class="metric-card" id="kpi-solar">
+                <div class="metric-header">
+                    <span class="metric-label">Solar Generation</span>
+                    <span class="metric-icon solar-icon"><i class="fa-solid fa-sun"></i></span>
+                </div>
+                <div class="metric-value" id="solar-out">0.00 <span class="metric-unit">kW</span></div>
+                <div class="metric-footer">
+                    <span class="metric-desc">Power supplied to system</span>
+                    <span class="metric-trend up"><i class="fa-solid fa-arrow-trend-up"></i></span>
+                </div>
+                <div class="metric-bar"><div class="metric-bar-fill solar-fill" style="width: 60%"></div></div>
+            </div>
+
+            <!-- Battery -->
+            <div class="metric-card" id="kpi-battery">
+                <div class="metric-header">
+                    <span class="metric-label">Battery SOC</span>
+                    <span class="metric-icon battery-icon"><i class="fa-solid fa-battery-half"></i></span>
+                </div>
+                <div class="metric-value" id="battery-soc">85.0 <span class="metric-unit">%</span></div>
+                <div class="metric-footer">
+                    <span class="metric-desc" id="battery-mode">Charging</span>
+                    <span class="metric-trend" id="battery-trend"><i class="fa-solid fa-arrow-up"></i></span>
+                </div>
+                <div class="metric-bar"><div class="metric-bar-fill battery-fill" style="width: 85%"></div></div>
+            </div>
+
+            <!-- Grid -->
+            <div class="metric-card" id="kpi-grid">
+                <div class="metric-header">
+                    <span class="metric-label">Grid Power</span>
+                    <span class="metric-icon grid-icon-m"><i class="fa-solid fa-plug-circle-bolt"></i></span>
+                </div>
+                <div class="metric-value" id="grid-power">0.00 <span class="metric-unit">kW</span></div>
+                <div class="metric-footer">
+                    <span class="metric-desc" id="grid-mode">Supplying</span>
+                    <span class="metric-trend" id="grid-trend"><i class="fa-solid fa-arrow-right"></i></span>
+                </div>
+                <div class="metric-bar"><div class="metric-bar-fill grid-fill" style="width: 30%"></div></div>
+            </div>
+
+            <!-- Load -->
+            <div class="metric-card" id="kpi-load">
+                <div class="metric-header">
+                    <span class="metric-label">Total Load</span>
+                    <span class="metric-icon load-icon"><i class="fa-solid fa-plug"></i></span>
+                </div>
+                <div class="metric-value" id="load-demand">0.00 <span class="metric-unit">kW</span></div>
+                <div class="metric-footer">
+                    <span class="metric-desc">Current consumption</span>
+                    <span class="metric-trend down"><i class="fa-solid fa-arrow-trend-down"></i></span>
+                </div>
+                <div class="metric-bar"><div class="metric-bar-fill load-fill" style="width: 72%"></div></div>
+            </div>
+        </section>
+
+        <!-- ===== CHARTS SECTION ===== -->
+        <section id="charts-section">
+            <!-- Main Chart -->
+            <div class="panel">
+                <div class="panel-header">
+                    <div class="panel-title">
+                        <i class="fa-solid fa-chart-area panel-icon orange"></i>
+                        <h2>Power Generation vs Load Demand</h2>
+                    </div>
+                    <div class="chart-legend-custom">
+                        <span class="legend-dot solar-dot"></span> Solar
+                        <span class="legend-dot load-dot"></span> Load
+                        <span class="legend-dot grid-dot"></span> Grid
+                    </div>
+                </div>
+                <div class="panel-body chart-body">
+                    <canvas id="energyChart"></canvas>
+                </div>
+            </div>
+
+            <!-- Two smaller charts -->
+            <div class="charts-pair">
+                <div class="panel">
+                    <div class="panel-header">
+                        <div class="panel-title">
+                            <i class="fa-solid fa-code-compare panel-icon blue"></i>
+                            <h2>EMS Grid Comparison</h2>
+                        </div>
+                    </div>
+                    <div class="panel-body chart-body chart-body-sm">
+                        <canvas id="comparisonChart"></canvas>
+                    </div>
+                </div>
+
+                <div class="panel">
+                    <div class="panel-header">
+                        <div class="panel-title">
+                            <i class="fa-solid fa-battery-full panel-icon green"></i>
+                            <h2>Battery SOC Profiles</h2>
+                        </div>
+                    </div>
+                    <div class="panel-body chart-body chart-body-sm">
+                        <canvas id="socChart"></canvas>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <!-- ===== EMS METRICS ROW ===== -->
+        <div class="ems-row">
+            <!-- Rule-Based -->
+            <div class="panel">
+                <div class="panel-header">
+                    <div class="panel-title">
+                        <i class="fa-solid fa-microchip panel-icon teal"></i>
+                        <h2>Rule-Based EMS</h2>
+                    </div>
+                    <span class="panel-badge teal-badge">Deterministic</span>
+                </div>
+                <div class="panel-body">
+                    <div class="ems-stats">
+                        <div class="ems-stat">
+                            <span class="ems-stat-label">Avg Grid Power</span>
+                            <div class="ems-stat-value">
+                                <span id="rule-grid-power">--</span>
+                                <span class="ems-unit">kW</span>
+                            </div>
+                        </div>
+                        <div class="ems-stat">
+                            <span class="ems-stat-label">Peak SOC</span>
+                            <div class="ems-stat-value">
+                                <span id="rule-soc">--</span>
+                                <span class="ems-unit">%</span>
+                            </div>
+                        </div>
+                        <div class="ems-stat highlight-stat">
+                            <span class="ems-stat-label">Grid Improvement</span>
+                            <div class="ems-stat-value green-val">
+                                <span id="rule-improvement">--</span>
+                                <span class="ems-unit">%</span>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Fuzzy Logic -->
+            <div class="panel">
+                <div class="panel-header">
+                    <div class="panel-title">
+                        <i class="fa-solid fa-brain panel-icon purple"></i>
+                        <h2>Fuzzy Logic EMS</h2>
+                    </div>
+                    <span class="panel-badge purple-badge">AI-Based</span>
+                </div>
+                <div class="panel-body">
+                    <div class="ems-stats">
+                        <div class="ems-stat">
+                            <span class="ems-stat-label">Avg Grid Power</span>
+                            <div class="ems-stat-value">
+                                <span id="fuzzy-grid-power">--</span>
+                                <span class="ems-unit">kW</span>
+                            </div>
+                        </div>
+                        <div class="ems-stat">
+                            <span class="ems-stat-label">Peak SOC</span>
+                            <div class="ems-stat-value">
+                                <span id="fuzzy-soc">--</span>
+                                <span class="ems-unit">%</span>
+                            </div>
+                        </div>
+                        <div class="ems-stat highlight-stat">
+                            <span class="ems-stat-label">Grid Improvement</span>
+                            <div class="ems-stat-value green-val">
+                                <span id="fuzzy-improvement">--</span>
+                                <span class="ems-unit">%</span>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Cost Card -->
+            <div class="panel">
+                <div class="panel-header">
+                    <div class="panel-title">
+                        <i class="fa-solid fa-indian-rupee-sign panel-icon orange"></i>
+                        <h2>Cost Optimization</h2>
+                    </div>
+                </div>
+                <div class="panel-body">
+                    <div class="cost-row">
+                        <div class="cost-item">
+                            <span class="cost-label">Baseline Cost</span>
+                            <span class="cost-value" id="current-cost">₹0.00 / cycle</span>
+                        </div>
+                        <div class="cost-item">
+                            <span class="cost-label">Optimization Savings</span>
+                            <span class="cost-value savings-val" id="savings">+₹0.00</span>
+                        </div>
+                    </div>
+                    <div class="efficiency-section">
+                        <div class="eff-labels">
+                            <span>Optimization Efficiency</span>
+                            <span id="eff-pct" class="eff-pct">0%</span>
+                        </div>
+                        <div class="eff-track">
+                            <div class="eff-fill" id="eff-fill" style="width:0%"></div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- ===== LOG SECTION ===== -->
+        <section class="panel" id="log-section">
+            <div class="panel-header">
+                <div class="panel-title">
+                    <i class="fa-solid fa-terminal panel-icon"></i>
+                    <h2>EMS Decision Log</h2>
+                </div>
+                <span class="panel-badge">Live</span>
+            </div>
+            <div class="panel-body log-panel-body">
+                <ul class="log-list" id="log-list">
+                    <li class="log-entry log-info">
+                        <span class="log-ts">--:--:--</span>
+                        <span class="log-msg">Waiting for simulation…</span>
+                    </li>
+                </ul>
+            </div>
+        </section>
+
+        <!-- Footer -->
+        <footer class="app-footer">
+            <span>Intelligent Microgrid EMS &mdash; Research Project &copy; 2026</span>
+            <span class="footer-sep">|</span>
+            <span>Fuzzy Logic &amp; Rule-Based Control Optimization</span>
+        </footer>
+
+    </div><!-- end .main-content -->
+
+    <!-- ===== HELP MODAL ===== -->
+    <div class="help-modal" id="help-modal">
+        <div class="help-modal-overlay" onclick="closeHelpModal()"></div>
+        <div class="help-modal-content">
+            <div class="help-modal-header">
+                <h2>Help & Documentation</h2>
+                <button class="help-modal-close" onclick="closeHelpModal()">&times;</button>
+            </div>
+            <div class="help-modal-body">
+                <div>
+                    <h3><i class="fa-solid fa-lightbulb"></i> What is This?</h3>
+                    <p>This is an <strong>Intelligent Microgrid Energy Management System (EMS)</strong> that demonstrates how advanced control algorithms optimize power distribution in renewable energy systems.</p>
+                </div>
+                <div>
+                    <h3><i class="fa-solid fa-cog"></i> How It Works</h3>
+                    <p>The system compares two optimization algorithms:</p>
+                    <ul>
+                        <li><strong>Rule-Based Control:</strong> Uses IF-THEN logic based on battery state and power deficit</li>
+                        <li><strong>Fuzzy Logic Control:</strong> Uses soft membership functions for smoother decisions</li>
+                    </ul>
+                </div>
+                <div>
+                    <h3><i class="fa-solid fa-play"></i> Getting Started</h3>
+                    <ol>
+                        <li><strong>Select a Case:</strong> Choose from 6 preset cases (Residential, Industrial, etc.) or use Synthetic Scenario for custom parameters</li>
+                        <li><strong>Configure Time Period:</strong> Select Morning/Afternoon/Evening/Night to adjust solar generation levels</li>
+                        <li><strong>Run Simulation:</strong> Click the "Run Simulation" button to execute the control algorithms</li>
+                        <li><strong>View Results:</strong> Check Metrics for key performance indicators and Charts for detailed analysis</li>
+                        <li><strong>Animate:</strong> Click Play to watch the simulation unfold second-by-second</li>
+                    </ol>
+                </div>
+                <div>
+                    <h3><i class="fa-solid fa-chart-line"></i> Understanding the Dashboard</h3>
+                    <div class="help-grid">
+                        <div class="help-item">
+                            <strong>Cost Optimization:</strong> Shows baseline cost vs optimization savings and efficiency percentage
+                        </div>
+                        <div class="help-item">
+                            <strong>Metrics:</strong> Real-time solar output, battery charge level, load demand, and grid power
+                        </div>
+                        <div class="help-item">
+                            <strong>Charts:</strong> Visualizes energy flow, algorithm performance, and battery behavior over time
+                        </div>
+                        <div class="help-item">
+                            <strong>Logs:</strong> System messages and algorithm decisions as they happen
+                        </div>
+                    </div>
+                </div>
+                <div>
+                    <h3><i class="fa-solid fa-database"></i> Preset Cases Explained</h3>
+                    <ul>
+                        <li><strong>Residential:</strong> Typical home energy consumption pattern</li>
+                        <li><strong>Industrial:</strong> High-power industrial facility with consistent demand</li>
+                        <li><strong>High Solar:</strong> Abundant solar capacity scenario</li>
+                        <li><strong>Low Solar:</strong> Limited solar generation scenario</li>
+                        <li><strong>Small Battery:</strong> Microgrid with limited storage capacity</li>
+                        <li><strong>Large Battery:</strong> Microgrid with high battery capacity</li>
+                    </ul>
+                </div>
+                <div>
+                    <h3><i class="fa-solid fa-wrench"></i> Manual Controls (Synthetic Scenario)</h3>
+                    <p>When you select "Synthetic Scenario", you can manually adjust:</p>
+                    <ul>
+                        <li><strong>Load 1, 2, 3:</strong> Three independent power consumption sources (0-500 kW each)</li>
+                        <li><strong>Solar Scale:</strong> Solar generation level (0-1 scale, or use time period buttons)</li>
+                        <li><strong>Battery Capacity:</strong> Available battery storage size (50-1000 Wh)</li>
+                    </ul>
+                </div>
+                <div>
+                    <h3><i class="fa-solid fa-flask-vial"></i> Electrical Perspective</h3>
+                    <p><strong>Mathematical Foundation:</strong> The system is built on fundamental electrical engineering principles and energy optimization equations.</p>
+                    <div style="background: #f8fafc; padding: 12px; border-radius: 8px; margin: 12px 0; font-family: var(--font-mono); font-size: 12px; color: #0f172a; line-height: 1.8; border-left: 3px solid var(--brand);"><strong>Key Equations:</strong><br/><br/>• <strong>Power Balance:</strong> P_load = P_solar + P_battery + P_grid<br/><br/>• <strong>Energy:</strong> E = P × Δt (Watt-hours)<br/><br/>• <strong>Battery SOC:</strong> SOC(t) = SOC(t-1) + (P_batt × Δt) / (Battery_Capacity × 3600)<br/><br/>• <strong>Cost:</strong> Cost = Σ(P_grid × Tariff × Δt / 3600)<br/><br/>• <strong>Grid Power:</strong> P_grid = max(0, P_load - P_solar - P_batt_discharge)<br/><br/>• <strong>Battery Dispatch (Fuzzy):</strong> P_batt_ref = f(Deficit_Membership, SOC_Membership) via defuzzification</div>
+                    <p><strong>Control Objectives:</strong></p>
+                    <ul>
+                        <li>Minimize grid power purchase during peak tariff hours</li>
+                        <li>Maintain battery SOC within safe limits (20-90%)</li>
+                        <li>Maximize renewable energy utilization</li>
+                        <li>Ensure all loads are served with priority allocation</li>
+                    </ul>
+                    <p><strong>System Parameters:</strong> Battery capacity ranges (50-1000 Wh), Solar generation (0-100%), Load consumption (0-500 kW per phase), Peak tariff: ₹8/kWh, Off-peak: ₹5/kWh</p>
+                </div>
+                <div>
+                    <ul>
+                        <li>Try the same case at different time periods to see how solar affects optimization</li>
+                        <li>Compare scenarios: high battery vs low battery to understand storage importance</li>
+                        <li>Use the Animate feature to understand algorithm decision-making in real-time</li>
+                        <li>Check the Logs panel to see detailed system messages and decisions</li>
+                    </ul>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script src="script.js"></script>
+</body>
+</html>
