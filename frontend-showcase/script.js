@@ -3,7 +3,8 @@
 // Chart.js + API Integration + Live Clock
 // ============================================================
 
-const API_URL = 'http://localhost:8000';
+// Use current origin for API calls (works for both localhost and production)
+const API_URL = window.location.origin;
 
 // State
 let simulationData = null;
