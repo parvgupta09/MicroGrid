@@ -268,9 +268,7 @@ P_batt_max = 1500; % Battery power limit (Watts)
 eta = 0.9;         % Battery efficiency (90%)
 ```
 
-**Simulink Model:** [Microgrid_System.slx](Microgrid_System.slx/)
-
-The Simulink model provides:
+**Simulink Model:** The Simulink model provides:
 - Real-time electrical measurements visualization
 - Power flow simulation across all components
 - Dynamic load and solar profile generation
