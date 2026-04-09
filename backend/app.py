@@ -3,12 +3,18 @@ FastAPI backend for Microgrid EMS System
 Provides REST API for simulation, scenario generation, and optimization
 """
 
+import os
+from dotenv import load_dotenv
 from fastapi import FastAPI, HTTPException
 from fastapi.middleware.cors import CORSMiddleware
+from fastapi.staticfiles import StaticFiles
 from pydantic import BaseModel
 import numpy as np
 import pandas as pd
 from typing import Optional, Dict, Any
+
+# Load environment variables from .env file
+load_dotenv()
 
 # Import core modules
 from config import EMSConfig, time_grid
@@ -26,13 +32,19 @@ app = FastAPI(
 )
 
 # Enable CORS for frontend communication
+allowed_origins = os.getenv("CORS_ORIGINS", "*").split(",")
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=["*"],  # Allow all origins for development
+    allow_origins=allowed_origins,
     allow_credentials=True,
     allow_methods=["*"],
     allow_headers=["*"],
 )
+
+# Mount frontend static files
+frontend_path = os.path.join(os.path.dirname(__file__), "..", "frontend-showcase")
+if os.path.exists(frontend_path):
+    app.mount("/", StaticFiles(directory=frontend_path, html=True), name="frontend")
 
 # ==================== Pydantic Models ====================
 
@@ -329,4 +341,10 @@ async def run_fuzzy_ems(request: SimulationRequest):
 
 if __name__ == "__main__":
     import uvicorn
-    uvicorn.run(app, host="0.0.0.0", port=8000)
+    
+    # Get environment variables with defaults
+    port = int(os.getenv("PORT", 8000))
+    host = os.getenv("HOST", "0.0.0.0")
+    reload = os.getenv("RELOAD", "False").lower() == "true"
+    
+    uvicorn.run(app, host=host, port=port, reload=reload)
