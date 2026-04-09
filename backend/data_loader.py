@@ -18,20 +18,24 @@ def load_case_csv(path: str | Path) -> pd.DataFrame:
 
 
 def discover_case_files(folder: str | Path = "Datasets") -> Dict[str, Path]:
-    # Handle both cases: running from root or from backend directory
-    root = Path(folder)
+    root = Path(__file__).parent.parent / folder
+    
     if not root.exists():
-        # Try parent directory if not found
+        root = Path(folder)
+    
+    if not root.exists():
         root = Path("..") / folder
-    if not root.exists():
-        # Last resort: find absolute path
-        root = Path(__file__).parent.parent / folder
     
     mapping: Dict[str, Path] = {}
     for case in ["residential", "industrial", "high_solar", "low_solar", "small_battery", "large_battery"]:
         candidate = root / f"{case}_data.csv"
         if candidate.exists():
             mapping[case] = candidate
+    
+    if not mapping:
+        import warnings
+        warnings.warn(f"No dataset cases found in {root}. Please ensure Datasets folder exists with CSV files.")
+    
     return mapping
 
 

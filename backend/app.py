@@ -13,10 +13,8 @@ import numpy as np
 import pandas as pd
 from typing import Optional, Dict, Any
 
-# Load environment variables from .env file
 load_dotenv()
 
-# Import core modules
 from config import EMSConfig, time_grid
 from cost_model import compare_costs
 from ems_fuzzy import simulate_fuzzy
@@ -24,14 +22,12 @@ from ems_rule import simulate_rule_based
 from load_allocator import simulate_priority_allocation, summarize_unserved_energy
 from data_loader import discover_case_files
 
-# Initialize FastAPI app
 app = FastAPI(
     title="Microgrid EMS API",
     description="Energy Management System for Microgrids",
     version="1.0.0"
 )
 
-# Enable CORS for frontend communication
 allowed_origins = os.getenv("CORS_ORIGINS", "*").split(",")
 app.add_middleware(
     CORSMiddleware,
@@ -41,7 +37,6 @@ app.add_middleware(
     allow_headers=["*"],
 )
 
-# Mount frontend static files
 frontend_path = os.path.join(os.path.dirname(__file__), "..", "frontend-showcase")
 if os.path.exists(frontend_path):
     app.mount("/", StaticFiles(directory=frontend_path, html=True), name="frontend")
@@ -84,10 +79,8 @@ class SimulationResponse(BaseModel):
     data: Optional[Dict[str, Any]] = None
 
 
-# ==================== Helper Functions ====================
 
 def _load_preset_case(case_name: str) -> Optional[pd.DataFrame]:
-    """Load preset case from CSV"""
     cases = discover_case_files("Datasets")
     if case_name in cases:
         return pd.read_csv(cases[case_name])
@@ -103,7 +96,6 @@ def _build_synthetic_scenario(
     soc_init: float,
     config: EMSConfig,
 ) -> pd.DataFrame:
-    """Build synthetic demand/generation scenario"""
     time = np.array(time_grid(config), dtype=float)
     load_total = (
         load1 * (1.0 - 0.2 * np.exp(-((time - 4.0) ** 2) / 1.0))
@@ -126,11 +118,8 @@ def _build_synthetic_scenario(
     )
 
 
-# ==================== API Endpoints ====================
-
 @app.get("/")
 async def root():
-    """Health check endpoint"""
     return {
         "status": "running",
         "service": "Microgrid EMS API",
@@ -140,7 +129,6 @@ async def root():
 
 @app.get("/cases")
 async def get_available_cases():
-    """Get list of available preset cases"""
     cases = discover_case_files("Datasets")
     return {
         "cases": list(cases.keys()),
@@ -150,16 +138,10 @@ async def get_available_cases():
 
 @app.post("/simulate", response_model=SimulationResponse)
 async def run_simulation(request: SimulationRequest):
-    """
-    Run full microgrid simulation with all EMS methods
-    Returns comparison of rule-based, fuzzy, and baseline approaches
-    """
     try:
-        # Create config
         config_dict = request.config_params.dict() if request.config_params else {}
         config = EMSConfig(**config_dict)
         
-        # Load or generate scenario
         if request.case_name:
             scenario = _load_preset_case(request.case_name)
             if scenario is None:
@@ -175,14 +157,11 @@ async def run_simulation(request: SimulationRequest):
                 params.soc_init, config
             )
         else:
-            # Default synthetic scenario
             scenario = _build_synthetic_scenario(100, 150, 200, 0.8, 300, 0.5, config)
         
-        # Run simulations
         rule_result = simulate_rule_based(scenario.copy(), config)
         fuzzy_result = simulate_fuzzy(scenario.copy(), config)
         
-        # Compare costs
         cost_comparison = compare_costs(
             scenario["Time"].to_numpy(),
             scenario["Grid"].to_numpy(),
@@ -191,7 +170,6 @@ async def run_simulation(request: SimulationRequest):
             config
         )
         
-        # Prepare output
         time_array = scenario["Time"].tolist()
         
         return SimulationResponse(
